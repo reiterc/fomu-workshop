@@ -33,39 +33,37 @@ int main(void) {
     rgb_init();
     usb_connect();
 	
-	// Hardcode the memory region of the FOMU chip
-	const unsigned int SRAM_BASE               = 0x10000000;
-	const unsigned int SRAM_ALIGNMENT          = 0x4;
-	const unsigned int KEY                     = 0x02082022;
+    // Hardcode the memory region of the FOMU chip
+    const unsigned int SRAM_BASE               = 0x10000000;
+    const unsigned int SRAM_ALIGNMENT          = 0x4;
+    const unsigned int KEY                     = 0x02082022;
 	
-	unsigned int current_memory_shared = 0x10000004;
-	unsigned int xfer_complete;
+    unsigned int current_memory_shared = 0x10000004;
+    unsigned int xfer_complete;
     int i = 0;
     while (1) {
-		
-		// If the value is 0x99999999, then the HOST->FOMU xfer is complete
-		xfer_complete = read_raw_address(SRAM_BASE);
-		if(xfer_complete == 0x99999999){
-			
-			// read each chunk of memory until the end of the transfer is reached;
-			// after each read, xor with KEY and write to same address;
-			// if the end of transfer is reached, write to the status memory location;
-			// "working data" memory range is 0x10000008-undetermined;
-			unsigned int xfer_word_buffer = read_raw_address(current_memory_shared);
-			for (i=0;i<8000;i++) {
-				xfer_word_buffer = read_raw_address(current_memory_shared);
-				xfer_word_buffer = xfer_word_buffer ^ KEY;
-				write_raw_address(xfer_word_buffer, current_memory_shared);
-				current_memory_shared += SRAM_ALIGNMENT;
-			}
-			
-			// Tell the HOST the encryption is complete
-			write_raw_address(0x88888888, SRAM_BASE);
-			
-			// Reset the working addresses
-			current_memory_shared = SRAM_BASE + SRAM_ALIGNMENT;
-			
+	// If the value is 0x99999999, then the HOST->FOMU xfer is complete
+	xfer_complete = read_raw_address(SRAM_BASE);
+	if(xfer_complete == 0x99999999){	
+		// read each chunk of memory until the end of the transfer is reached;
+		// after each read, xor with KEY and write to same address;
+		// if the end of transfer is reached, write to the status memory location;
+		// "working data" memory range is 0x10000008-undetermined;
+                unsigned int xfer_word_buffer = read_raw_address(current_memory_shared);
+		for (i=0;i<8000;i++) {
+			xfer_word_buffer = read_raw_address(current_memory_shared);
+			xfer_word_buffer = xfer_word_buffer ^ KEY;
+			write_raw_address(xfer_word_buffer, current_memory_shared);
+			current_memory_shared += SRAM_ALIGNMENT;
 		}
-        msleep(5);
+			
+		// Tell the HOST the encryption is complete
+		write_raw_address(0x88888888, SRAM_BASE);
+			
+		// Reset the working addresses
+		current_memory_shared = SRAM_BASE + SRAM_ALIGNMENT;
+			
+	}
+     msleep(5);
     }
 }
