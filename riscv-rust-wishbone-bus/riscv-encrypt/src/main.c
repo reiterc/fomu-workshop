@@ -6,9 +6,7 @@
 
 void isr(void) {
     unsigned int irqs;
-
     irqs = irq_pending() & irq_getmask();
-
     if (irqs & (1 << USB_INTERRUPT))
         usb_isr();
 }
